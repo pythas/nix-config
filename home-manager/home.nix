@@ -14,6 +14,7 @@
     # ./nvim.nix
     inputs.hyprland.homeManagerModules.default
     ./gtk.nix
+    ./waybar.nix
   ];
 
   nixpkgs = {
@@ -48,20 +49,38 @@
     homeDirectory = "/home/johan";
   };
 
-  # Add stuff for your user as you see fit:
-  # programs.neovim.enable = true;
+  # nvim
+  # programs.neovim = {
+  #   enable = true;
+  #   plugins = with pkgs.nvimPlugins; [
+  #     
+  #   ];
+  # };
+
+  #home.file.".config/nvim" = {
+  #  recursive = true;
+  #  source = ../dotfiles/nvim;
+  #};
+
+  programs.vscode = {
+    enable = true;
+    extensions = with pkgs.vscode-extensions; [
+      # catppuccin.catppuccin-vsc
+      # ms-vscode-remote.remote-ssh
+    ];
+  };
+
   home.packages = with pkgs; [
     firefox
     font-awesome_5
-    # killall
     hyprpaper
     cliphist
   ];
 
   home.file.".config/hypr/hyprpaper.conf".text = ''
-preload = ~/Pictures/bg1.jpg
-wallpaper = eDP-1,~/Pictures/bg1.jpg
-'';
+    preload = ~/Pictures/bg1.jpg
+    wallpaper = eDP-1,~/Pictures/bg1.jpg
+  '';
 
   # Kitty
   home.file.".config/kitty/catppuccin" = {
@@ -79,72 +98,52 @@ wallpaper = eDP-1,~/Pictures/bg1.jpg
     '';
   };
 
-  # Enable home-manager and git
   programs.home-manager.enable = true;
-  programs.git.enable = true;
+
+  programs.git = {
+    enable = true;
+    userName = "Johan Grönberg";
+    userEmail = "pythas@gmail.com";
+  };
 
   # Bash
   programs.bash.enable = true;
 
   programs.wofi.enable = true;
 
-  programs.waybar = {
-    enable = true;
-    
-    settings = {
-      mainBar = {
-        layer = "top";
-        position = "top";
-        modules-left = [ "wlr/workspaces" ];
-        modules-center = [ "wlr/taskbar" ];
-        modules-right = [ "battery" "pulseaudio" "backlight" "cpu" "memory" "network" "clock" ];
-
-        "clock" = {
-          format-alt = "{:%a, %d. %b %H:%M}";
-        };
-   
-        "battery" = {
-          states = {
-            warning = 30;
-            critical = 10;
-          };
-
-          format = "{icon} {capacity}%";
-        };
-      };
-    };
-
-    style = ''
-  * {
-    font-family: FontAwesome, Roboto, sans-serif;
-  }
-
-  window#waybar {
-    background: transparent;
-    /* background-color: rgba(2, 90, 125, 0.1); */
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  widget > label {
-    padding: 5px;
-  }
-
-  .modules-left,
-  .modules-center,
-  .modules-right {
-  }
-'';
+  # Hyprland
+  home.file.".config/hypr/theme" = {
+    recursive = true;
+    source = "${pkgs.fetchgit {
+      url = "https://github.com/catppuccin/hyprland.git";
+      sha256 = "sha256-Z7fLzmjsUJwKeUORWppcpeBKcZzuZL0vcXF3k3QecjU=";
+      sparseCheckout = [ "themes" ];
+    }}/themes";
   };
 
-  # Hyprland
   wayland.windowManager.hyprland = {
     enable = true;
     extraConfig = ''
+      source=~/.config/hypr/theme/mocha.conf
+
 exec-once = waybar
 exec-once = wl-paste --type text --watch cliphist store
+exec-once = mako
 exec = hyprpaper
 
 monitor = ,1920x1080,0x0,1
+
+general {
+  border_size = 2;
+  col.inactive_border = $base;
+  col.active_border = $text;
+}
+
+decoration {
+  rounding = 4;
+  active_opacity = 0.98;
+  inactive_opacity = 0.9;
+}
 
 input {
   kb_layout = se
@@ -210,45 +209,15 @@ bind = SUPERSHIFT, 0, movetoworkspacesilent, 10
 '';
   };
 
-  # GTK
-  #let
-  #  catppuccin = pkgs.catppuccin-gtk.override {
-  #    accents = [ "pink" ];
-  #    size = "compact";
-  #    tweaks = [ "rimless" "black" ];
-  #    variant = "mocha";
-  #  };
-  #in
-  #{
-
-  #};
-
-  #gtk = {
-  #  enable = true;
-  #  font.name = "TeX Gyre Adventor 10";
-  #  theme = {
-  #    name = "Catppuccin-Mocha-Compact-Pink-Dark";
-  #    package = catppuccin;
-  #  };
-  #  iconTheme = {
-  #    name = "Papirus-Dark";
-  #    package = pkgs.papirus-icon-theme;
-  #  };
-    #gtk3.extraConfig = {
-    #  Settings = ''
-    #    gtk-application-prefer-dark-theme=1
-    #  '';
-    #};
-    #gtk4.extraConfig = {
-    #  Settings = ''
-    #    gtk-application-prefer-dark-theme=1
-    #  '';
-    #};
-  #};
-
-  #home.file =
-  #  let themeDir = 
-
+  # Mako
+  services.mako = {
+    enable = true;
+    backgroundColor = "#313244aa";
+    borderColor = "#313244aa";
+    borderRadius = 8;
+    textColor = "#cdd6f4ff";
+    font = "Roboto 10";
+  };
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
