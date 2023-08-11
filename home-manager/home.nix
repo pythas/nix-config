@@ -80,7 +80,6 @@ in
     cliphist
     zigpkgs.master
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
-    esphome
   ];
 
   # nvim
@@ -142,10 +141,25 @@ in
 
   programs.home-manager.enable = true;
 
+  # Git
   programs.git = {
     enable = true;
     userName = "Johan Grönberg";
     userEmail = "pythas@gmail.com";
+    signing = {
+      key = null;
+      signByDefault = true;
+    };
+  };
+
+  programs.gpg = {
+    enable = true;
+  };
+
+  services.gpg-agent = {
+    enable = true;
+    enableSshSupport = true;
+    pinentryFlavor = "gtk2";
   };
 
   # Bash
