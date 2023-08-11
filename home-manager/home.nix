@@ -1,7 +1,22 @@
 # This is your home-manager configuration file
 # Use this to configure your home environment (it replaces ~/.config/nixpkgs/home.nix)
 
-{ inputs, outputs, lib, config, pkgs, ... }: {
+{ inputs, outputs, lib, config, pkgs, ... }:
+
+let
+  pluginGit = rev: ref: repo: pkgs.vimUtils.buildVimPluginFrom2Nix {
+    pname = "${lib.strings.sanitizeDerivationName repo}";
+    version = ref;
+    src = builtins.fetchGit {
+      url = "https://github.com/${repo}.git";
+      ref = ref;
+      rev = rev;
+    };
+  };
+
+  plugin = pluginGit "" "HEAD";
+in
+{
   # You can import other home-manager modules here
   imports = [
     # If you want to use modules your own flake exports (from modules/home-manager):
@@ -12,6 +27,7 @@
 
     # You can also split up your configuration and import pieces of it here:
     # ./nvim.nix
+    inputs.nixneovim.nixosModules.default
     inputs.hyprland.homeManagerModules.default
     ./gtk.nix
     ./waybar.nix
@@ -24,6 +40,14 @@
       outputs.overlays.additions
       outputs.overlays.modifications
       outputs.overlays.unstable-packages
+
+      inputs.nixneovim.overlays.default
+      inputs.zig.overlays.default
+
+      (import (builtins.fetchTarball {
+        url = "https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz";
+        sha256 = "sha256:1v9nw6v52i44fccyr035qn8ijhgi623nawpz5csqzd4975ym1say";
+      }))
 
       # You can also add overlays exported from other flakes:
       # neovim-nightly-overlay.overlays.default
@@ -49,33 +73,51 @@
     homeDirectory = "/home/johan";
   };
 
-  # nvim
-  # programs.neovim = {
-  #   enable = true;
-  #   plugins = with pkgs.nvimPlugins; [
-  #     
-  #   ];
-  # };
-
-  #home.file.".config/nvim" = {
-  #  recursive = true;
-  #  source = ../dotfiles/nvim;
-  #};
-
-  programs.vscode = {
-    enable = true;
-    extensions = with pkgs.vscode-extensions; [
-      # catppuccin.catppuccin-vsc
-      # ms-vscode-remote.remote-ssh
-    ];
-  };
-
   home.packages = with pkgs; [
     firefox
     font-awesome_5
     hyprpaper
     cliphist
+    zigpkgs.master
+    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+    esphome
   ];
+
+  # nvim
+  programs.neovim = {
+    enable = true;
+  };
+  # programs.nixneovim = {
+  #   enable = true;
+  #   package = pkgs.neovim-nightly;
+  #   viAlias = true;
+  #   vimAlias = true;
+  #   plugins = {
+  #   
+  #   };
+  #   extraPlugins = with pkgs.vimExtraPlugins; [
+  #     catppuccin
+  #     plenary-nvim
+  #     nvim-web-devicons
+  #     nui-nvim
+  #     neo-tree-nvim
+  #     (pluginGit "0c4f965468259ab6e47fd7c6b2127583a8860eb1" "master" "ziglang/zig.vim")
+  #   ];
+  # };
+
+  # home.file.".config/nvim" = {
+  #   recursive = true;
+  #   source = ../dotfiles/nvim;
+  # };
+
+  #programs.vscode = {
+  #  enable = true;
+  #  extensions = with pkgs.vscode-extensions; [
+  #    # catppuccin.catppuccin-vsc
+  #    # ms-vscode-remote.remote-ssh
+  #  ];
+  #};
+
 
   home.file.".config/hypr/hyprpaper.conf".text = ''
     preload = ~/Pictures/bg1.jpg
@@ -146,7 +188,7 @@ decoration {
 }
 
 input {
-  kb_layout = se
+  kb_layout = se,us
 }
 
 misc {
@@ -157,6 +199,8 @@ misc {
 bind = SUPER, return, exec, kitty
 bind = SUPER, b, exec, firefox
 bind = SUPER, space, exec, wofi --show drun
+
+bind = SUPER, a, exec, hyprctl switchxkblayout at-translated-set-2-keyboard next
 
 bind = SUPER, e, exit,
 bind = SUPER, w, killactive,

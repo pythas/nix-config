@@ -19,6 +19,9 @@
     # Zig
     zig.url = "github:mitchellh/zig-overlay";
 
+    # NixNeovim
+    nixneovim.url = "github:nixneovim/nixneovim";
+
     # TODO: Add any other flake you might need
     # hardware.url = "github:nixos/nixos-hardware";
 
@@ -27,7 +30,7 @@
     # nix-colors.url = "github:misterio77/nix-colors";
   };
 
-  outputs = { self, nixpkgs, home-manager, hyprland, zig, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, hyprland, zig, nixneovim, ... }@inputs:
     let
       inherit (self) outputs;
       forAllSystems = nixpkgs.lib.genAttrs [
